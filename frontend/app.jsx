@@ -189,7 +189,7 @@ function Header({ ops }) {
 }
 
 // ---------- DEMO STAGE ----------
-function DemoStage({ state, prompt, result, progress, styleOverrides }) {
+function DemoStage({ state, prompt, result, progress, styleOverrides, textOverrides }) {
   return (
     <div className="demo-stage" style={{
       position: 'relative',
@@ -235,7 +235,7 @@ function DemoStage({ state, prompt, result, progress, styleOverrides }) {
         alignItems: 'center',
         justifyContent: 'center',
       }}>
-        {state === 'idle' && <IdleVis styleOverrides={styleOverrides} />}
+        {state === 'idle' && <IdleVis styleOverrides={styleOverrides} textOverrides={textOverrides} />}
         {state === 'thinking' && <ThinkingVis prompt={prompt} progress={progress} />}
         {state === 'result' && <ResultVis result={result} />}
       </div>
@@ -268,7 +268,7 @@ function Corners() {
   );
 }
 
-function IdleVis({ styleOverrides }) {
+function IdleVis({ styleOverrides, textOverrides }) {
   return (
     <div style={{
       width: '100%',
@@ -345,7 +345,7 @@ function IdleVis({ styleOverrides }) {
           color: 'var(--fg)',
           ...styleFromOverrides(styleOverrides?.title),
         }}>
-          ここに生成結果が表示されます
+          {textOverrides?.title ?? 'ここに生成結果が表示されます'}
         </div>
         <div data-el-name="subtitle" style={{
           fontSize: 13,
@@ -354,7 +354,7 @@ function IdleVis({ styleOverrides }) {
           marginBottom: 18,
           ...styleFromOverrides(styleOverrides?.subtitle),
         }}>
-          下の入力欄にプロンプトを入れて「Run」を押すと、リクエストに応じた出力がこのエリアに展開されます。
+          {textOverrides?.subtitle ?? '下の入力欄にプロンプトを入れて「Run」を押すと、リクエストに応じた出力がこのエリアに展開されます。'}
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button data-el-name="button" type="button" style={{
@@ -370,7 +370,7 @@ function IdleVis({ styleOverrides }) {
             letterSpacing: '-0.01em',
             ...styleFromOverrides(styleOverrides?.button),
           }}>
-            Get Started
+            {textOverrides?.button ?? 'Get Started'}
           </button>
           <button data-el-name="sub-button" type="button" style={{
             background: 'transparent',
@@ -385,7 +385,7 @@ function IdleVis({ styleOverrides }) {
             letterSpacing: '-0.01em',
             ...styleFromOverrides(styleOverrides?.['sub-button']),
           }}>
-            Learn more
+            {textOverrides?.['sub-button'] ?? 'Learn more'}
           </button>
         </div>
       </div>
@@ -1075,6 +1075,7 @@ function App() {
   const [logs, setLogs] = useState(initialLogs);
   const [consoleOpen, setConsoleOpen] = useState(true);
   const [styleOverrides, setStyleOverrides] = useState({});
+  const [textOverrides, setTextOverrides] = useState({});
   const [busy, setBusy] = useState(false);
 
   const suggestions = [
@@ -1097,6 +1098,7 @@ function App() {
     setResult(null);
     setProgress(0);
     setStyleOverrides({});
+    setTextOverrides({});
     pushLog('sys', 'reset · stage cleared');
   };
 
@@ -1114,6 +1116,15 @@ function App() {
       }
       return next;
     });
+    setTextOverrides(prev => {
+      const next = { ...prev };
+      for (const op of operations) {
+        if (op.action !== 'updateText') continue;
+        if (!op.target || typeof op.value !== 'string') continue;
+        next[op.target] = op.value;
+      }
+      return next;
+    });
   };
 
   const runSkill = async (prompt) => {
@@ -1121,7 +1132,7 @@ function App() {
     setState('idle');
     setResult(null);
     pushLog('in', `> ${prompt}`);
-    pushLog('sys', 'dispatching → skill:style-updater');
+    pushLog('sys', 'dispatching → backend (skill router)');
     try {
       const resp = await fetch(`${API_BASE}/process`, {
         method: 'POST',
@@ -1138,6 +1149,7 @@ function App() {
         pushLog('err', 'unexpected response shape (operations missing)');
         return;
       }
+      pushLog('sys', `resolved → skill:${data.skill ?? 'unknown'}`);
       applyOperations(data.operations);
       pushLog('out', data.log || `applied ${data.operations.length} op(s)`);
       setOps(o => o + 1);
@@ -1203,7 +1215,7 @@ function App() {
 
       <main className="main-wrap" style={{ flex: 1 }}>
         <div className="demo-stage-wrap">
-          <DemoStage state={state} prompt={activePrompt} result={result} progress={progress} styleOverrides={styleOverrides} />
+          <DemoStage state={state} prompt={activePrompt} result={result} progress={progress} styleOverrides={styleOverrides} textOverrides={textOverrides} />
         </div>
 
         <div className="chat-dock" style={{ marginTop: 32 }}>

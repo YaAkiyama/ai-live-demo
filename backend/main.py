@@ -11,11 +11,28 @@ load_dotenv(dotenv_path=Path(__file__).parent / ".env")
 
 MODEL = "claude-opus-4-7"
 SKILLS_DIR = Path(__file__).parent.parent / "skills"
+SKILLS_TO_LOAD = ("style-updater", "text-changer")
+
+ROUTER_PREAMBLE = (
+    "# AI Live Demo - Skill Router\n\n"
+    "以下に **複数の Skill 定義** が記載されています。ユーザーの指示を読み、"
+    "最も適切な Skill を **1 つだけ** 選択し、その Skill の出力フォーマット"
+    "（`skill` フィールドにその Skill 名を入れる）で JSON を返してください。\n\n"
+    "## 判断基準\n"
+    "- 「色を変える」「太字に」「サイズを大きく」「枠線を」など **見た目** の変更"
+    " → `style-updater`\n"
+    "- 「テキストを書き換える」「文章を ○○ に」「ラベルを変える」など **文字内容**"
+    " の変更 → `text-changer`\n"
+    "- 両方該当しそうな場合は、ユーザーの主目的に最も合致する Skill を 1 つ選択。\n"
+    "- どの Skill にも該当しない場合は、最も近い Skill の枠で `operations: []` を返し、"
+    "`log` に理由を日本語で書いてください。\n\n"
+    "---\n\n"
+)
 
 JSON_ONLY_REMINDER = (
     "\n\n---\n"
     "## 出力規約（厳守）\n"
-    "- 上記の出力フォーマットで定義された JSON オブジェクトのみを返してください。\n"
+    "- 選択した Skill の出力フォーマットで定義された JSON オブジェクトのみを返してください。\n"
     "- 応答の **1 文字目は必ず `{`**、**最後の文字は必ず `}`** です。\n"
     "- マークダウンのコードフェンス（```json ... ``` 等）、前置き、後置き、解説文、"
     "「はい」「了解しました」等の応答文を、JSON の前後に一切付けてはいけません。\n"
@@ -40,6 +57,11 @@ def load_skill(name: str) -> str:
     if not path.is_file():
         raise HTTPException(status_code=404, detail=f"skill '{name}' not found")
     return path.read_text(encoding="utf-8")
+
+
+def build_system_prompt() -> str:
+    skill_bodies = [load_skill(name) for name in SKILLS_TO_LOAD]
+    return ROUTER_PREAMBLE + "\n\n---\n\n".join(skill_bodies) + JSON_ONLY_REMINDER
 
 
 def extract_json(text: str) -> str:
@@ -80,7 +102,7 @@ async def test_llm():
 
 @app.post("/process")
 async def process(req: ProcessRequest):
-    system_prompt = load_skill("style-updater") + JSON_ONLY_REMINDER
+    system_prompt = build_system_prompt()
 
     resp = await client.messages.create(
         model=MODEL,
