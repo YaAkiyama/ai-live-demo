@@ -5,12 +5,14 @@ from anthropic import AsyncAnthropic
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 load_dotenv(dotenv_path=Path(__file__).parent / ".env")
 
 MODEL = "claude-opus-4-7"
 SKILLS_DIR = Path(__file__).parent.parent / "skills"
+FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
 SKILLS_TO_LOAD = ("style-updater", "text-changer")
 
 ROUTER_PREAMBLE = (
@@ -81,7 +83,7 @@ class ProcessRequest(BaseModel):
     prompt: str = Field(min_length=1)
 
 
-@app.get("/")
+@app.get("/health")
 async def health():
     return {"status": "ok"}
 
@@ -126,6 +128,9 @@ async def process(req: ProcessRequest):
                 "raw": raw_text[:1000],
             },
         )
+
+
+app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
 
 
 if __name__ == "__main__":
