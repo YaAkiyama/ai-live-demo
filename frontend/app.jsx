@@ -101,10 +101,10 @@ function hash(s) {
 
 // ---------- routing & operations ----------
 function pickRoute(prompt) {
-  if (/タイトル|サブテキスト|サブボタン|ボタン|title|subtitle|button/i.test(prompt)) {
-    return 'skill';
+  if (/palette|パレット|chart|graph|グラフ|dashboard|ダッシュボード/i.test(prompt)) {
+    return 'demo';
   }
-  return 'demo';
+  return 'skill';
 }
 
 function kebabToCamel(s) {
