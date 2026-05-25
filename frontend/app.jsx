@@ -926,21 +926,21 @@ function Console({ logs, open, onToggle, onClear }) {
         )}
       </div>
       {open && (
-        <div ref={scrollRef} style={{
+        <div ref={scrollRef} className="console-scroll" style={{
           maxHeight: 220,
           overflowY: 'auto',
           padding: '8px 14px 12px',
           fontFamily: 'JetBrains Mono, monospace',
-          fontSize: 12,
-          lineHeight: 1.7,
+          fontSize: 10,
+          lineHeight: 1.6,
         }}>
           {logs.length === 0 && (
             <div style={{ color: 'var(--fg-dim)', padding: '8px 0' }}>// no logs yet · system idle</div>
           )}
           {logs.map((l, i) => (
-            <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
-              <span style={{ color: 'var(--fg-dim)', flexShrink: 0 }}>{l.t}</span>
-              <span style={{ color: 'var(--fg-dim)', flexShrink: 0, width: 36 }}>
+            <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>
+              <span style={{ color: 'var(--fg-dim)', flexShrink: 0 }}>{l.t.slice(0, 8)}</span>
+              <span style={{ color: 'var(--fg-dim)', flexShrink: 0, width: 42 }}>
                 [{l.level}]
               </span>
               <span style={{ color: levelColor[l.level] || 'var(--fg)', wordBreak: 'break-word' }}>
@@ -1249,8 +1249,11 @@ function App() {
       <Header ops={ops} />
 
       <main className="main-wrap" style={{ flex: 1 }}>
-        <div className="demo-stage-wrap">
-          <DemoStage state={state} prompt={activePrompt} result={result} progress={progress} styleOverrides={styleOverrides} textOverrides={textOverrides} />
+        <div className="demo-grid">
+          <div className="demo-stage-wrap">
+            <DemoStage state={state} prompt={activePrompt} result={result} progress={progress} styleOverrides={styleOverrides} textOverrides={textOverrides} />
+          </div>
+          <Console logs={logs} open={consoleOpen} onToggle={() => setConsoleOpen(o => !o)} onClear={handleClearLogs} />
         </div>
 
         <div className="chat-dock" style={{ marginTop: 32 }}>
@@ -1266,7 +1269,6 @@ function App() {
             onInteract={() => setHintDismissed(true)}
           />
         </div>
-        <Console logs={logs} open={consoleOpen} onToggle={() => setConsoleOpen(o => !o)} onClear={handleClearLogs} />
         <div className="chat-spacer" />
       </main>
 
