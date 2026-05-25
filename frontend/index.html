@@ -103,8 +103,46 @@
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
+  @keyframes ai-input-pulse {
+    0%, 100% { opacity: 0.35; }
+    50%      { opacity: 1; }
+  }
+  @keyframes ai-placeholder-fade {
+    0%, 100% { opacity: 0.75; }
+    50%      { opacity: 1; }
+  }
+  @keyframes ai-hint-bounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50%      { transform: translateX(-50%) translateY(-5px); }
+  }
 
   .fade-in { animation: fade-in-up 0.4s cubic-bezier(.2,.7,.2,1) both; }
+  .ai-input-pulse-on {
+    position: relative;
+  }
+  .ai-input-pulse-on::before {
+    content: '';
+    position: absolute;
+    inset: -5px;
+    border-radius: 20px;
+    border: 3px solid #10b981;
+    pointer-events: none;
+    animation: ai-input-pulse 1.8s ease-in-out infinite;
+    will-change: opacity;
+  }
+  .ai-input-pulse-on .ai-prompt-textarea::placeholder {
+    animation: ai-placeholder-fade 1.8s ease-in-out infinite;
+  }
+  .ai-input-pulse-on .ai-caret-blink {
+    animation: type-cursor 1s steps(2) infinite;
+  }
+  .ai-prompt-textarea::placeholder {
+    color: var(--fg-muted);
+    opacity: 0.85;
+  }
+  .ai-hint-bubble {
+    animation: ai-hint-bounce 1.6s ease-in-out infinite;
+  }
 
   /* focus ring */
   button:focus-visible, input:focus-visible, textarea:focus-visible {

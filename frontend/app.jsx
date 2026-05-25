@@ -124,7 +124,7 @@ function styleFromOverrides(overrides) {
 function Header({ ops }) {
   return (
     <header className="header" style={{
-      padding: '40px 24px 24px',
+      padding: '24px 24px 16px',
       textAlign: 'center',
       position: 'relative',
     }}>
@@ -134,7 +134,7 @@ function Header({ ops }) {
         justifyContent: 'center',
         gap: 10,
         flexWrap: 'wrap',
-        marginBottom: 24,
+        marginBottom: 14,
       }}>
         <div style={{
           display: 'inline-flex',
@@ -174,7 +174,7 @@ function Header({ ops }) {
       </div>
       <h1 style={{
         margin: 0,
-        fontSize: 'clamp(40px, 7vw, 88px)',
+        fontSize: 'clamp(28px, 4vw, 48px)',
         fontWeight: 600,
         letterSpacing: '-0.04em',
         lineHeight: 0.95,
@@ -272,12 +272,12 @@ function IdleVis({ styleOverrides, textOverrides }) {
   return (
     <div style={{
       width: '100%',
-      maxWidth: 560,
+      maxWidth: 640,
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       textAlign: 'center',
-      gap: 28,
+      gap: 24,
     }}>
       {/* orbiting core */}
       <div style={{ position: 'relative', width: 140, height: 140 }}>
@@ -323,7 +323,7 @@ function IdleVis({ styleOverrides, textOverrides }) {
       {/* sample changeable text block */}
       <div style={{
         width: '100%',
-        padding: '24px 28px',
+        padding: '28px 32px',
         background: '#0a0a0a',
         border: '1px dashed #2a2a2a',
         borderRadius: 12,
@@ -338,7 +338,7 @@ function IdleVis({ styleOverrides, textOverrides }) {
           — サンプル出力 ・ ホバーすると要素名が表示されます —
         </div>
         <div data-el-name="title" style={{
-          fontSize: 22,
+          fontSize: 28,
           fontWeight: 600,
           letterSpacing: '-0.02em',
           marginBottom: 8,
@@ -348,7 +348,7 @@ function IdleVis({ styleOverrides, textOverrides }) {
           {textOverrides?.title ?? 'ここに生成結果が表示されます'}
         </div>
         <div data-el-name="subtitle" style={{
-          fontSize: 13,
+          fontSize: 15,
           color: 'var(--fg-muted)',
           lineHeight: 1.6,
           marginBottom: 18,
@@ -362,8 +362,8 @@ function IdleVis({ styleOverrides, textOverrides }) {
             color: '#0a0a0a',
             border: 'none',
             borderRadius: 8,
-            padding: '8px 14px',
-            fontSize: 13,
+            padding: '10px 18px',
+            fontSize: 14,
             fontWeight: 600,
             fontFamily: 'inherit',
             cursor: 'pointer',
@@ -377,8 +377,8 @@ function IdleVis({ styleOverrides, textOverrides }) {
             color: 'var(--fg)',
             border: '1px solid var(--border-strong)',
             borderRadius: 8,
-            padding: '8px 14px',
-            fontSize: 13,
+            padding: '10px 18px',
+            fontSize: 14,
             fontWeight: 500,
             fontFamily: 'inherit',
             cursor: 'pointer',
@@ -641,7 +641,7 @@ function TextResult({ data }) {
 }
 
 // ---------- CHAT INPUT ----------
-function ChatInput({ value, onChange, onSubmit, onReset, disabled, suggestions, onPickSuggestion }) {
+function ChatInput({ value, onChange, onSubmit, onReset, disabled, suggestions, onPickSuggestion, showHint, onInteract }) {
   const [focused, setFocused] = useState(false);
   const ref = useRef(null);
 
@@ -651,8 +651,41 @@ function ChatInput({ value, onChange, onSubmit, onReset, disabled, suggestions, 
   };
 
   return (
-    <div style={{ width: '100%', maxWidth: 760, margin: '0 auto' }}>
-      <div style={{
+    <div style={{ width: '100%', maxWidth: 760, margin: '0 auto', position: 'relative' }}>
+      {showHint && !focused && !value.trim() && (
+        <div className="ai-hint-bubble" style={{
+          position: 'absolute',
+          bottom: 'calc(100% + 14px)',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'var(--accent)',
+          color: '#0a0a0a',
+          padding: '8px 16px',
+          borderRadius: 999,
+          fontSize: 13,
+          fontWeight: 600,
+          whiteSpace: 'nowrap',
+          pointerEvents: 'none',
+          boxShadow: '0 6px 20px -6px #10b98199',
+          zIndex: 10,
+        }}>
+          ここにプロンプトを入力 ↓
+          <span style={{
+            position: 'absolute',
+            top: '100%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 0,
+            height: 0,
+            borderLeft: '7px solid transparent',
+            borderRight: '7px solid transparent',
+            borderTop: '7px solid var(--accent)',
+          }} />
+        </div>
+      )}
+      <div
+        className={!focused && !value.trim() ? 'ai-input-pulse-on' : undefined}
+        style={{
         background: '#0d0d0d',
         border: `1px solid ${focused ? 'var(--accent)' : 'var(--border-strong)'}`,
         borderRadius: 16,
@@ -663,7 +696,7 @@ function ChatInput({ value, onChange, onSubmit, onReset, disabled, suggestions, 
         transition: 'all 0.2s ease',
       }}>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, padding: '12px 14px' }}>
-          <span className="mono" style={{
+          <span className="mono ai-caret-blink" style={{
             fontSize: 14,
             color: 'var(--accent)',
             paddingBottom: 4,
@@ -671,9 +704,10 @@ function ChatInput({ value, onChange, onSubmit, onReset, disabled, suggestions, 
           }}>›</span>
           <textarea
             ref={ref}
+            className="ai-prompt-textarea"
             value={value}
-            onChange={(e) => onChange(e.target.value)}
-            onFocus={() => setFocused(true)}
+            onChange={(e) => { onInteract?.(); onChange(e.target.value); }}
+            onFocus={() => { setFocused(true); onInteract?.(); }}
             onBlur={() => setFocused(false)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
@@ -1077,6 +1111,7 @@ function App() {
   const [styleOverrides, setStyleOverrides] = useState({});
   const [textOverrides, setTextOverrides] = useState({});
   const [busy, setBusy] = useState(false);
+  const [hintDismissed, setHintDismissed] = useState(false);
 
   const suggestions = [
     'タイトルの色を変える',
@@ -1222,11 +1257,13 @@ function App() {
           <ChatInput
             value={input}
             onChange={setInput}
-            onSubmit={() => { run(input); setInput(''); }}
+            onSubmit={() => { setHintDismissed(true); run(input); setInput(''); }}
             onReset={handleReset}
             disabled={state === 'thinking' || busy}
             suggestions={suggestions}
             onPickSuggestion={(s) => { setInput(s); }}
+            showHint={!hintDismissed && ops === 0 && !input}
+            onInteract={() => setHintDismissed(true)}
           />
         </div>
         <Console logs={logs} open={consoleOpen} onToggle={() => setConsoleOpen(o => !o)} onClear={handleClearLogs} />
