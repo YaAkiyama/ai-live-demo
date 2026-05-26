@@ -191,6 +191,7 @@
   .demo-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 360px;
+    grid-template-rows: min(calc((100vw - 428px) * 9 / 16), 495px);
     gap: 20px;
     align-items: stretch;
     max-width: 1280px;
@@ -211,6 +212,7 @@
   @media (max-width: 1024px) {
     .demo-grid {
       grid-template-columns: 1fr;
+      grid-template-rows: auto;
     }
     .demo-grid .console-area {
       max-width: 760px !important;

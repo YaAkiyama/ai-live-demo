@@ -232,8 +232,10 @@ function DemoStage({ state, prompt, result, progress, styleOverrides, textOverri
         inset: 0,
         padding: '52px 40px 40px',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: 'safe center',
+        justifyContent: 'safe center',
+        overflowY: 'auto',
+        overflowX: 'hidden',
       }}>
         {state === 'idle' && <IdleVis styleOverrides={styleOverrides} textOverrides={textOverrides} />}
         {state === 'thinking' && <ThinkingVis prompt={prompt} progress={progress} />}
@@ -1114,12 +1116,12 @@ function App() {
   const [hintDismissed, setHintDismissed] = useState(false);
 
   const suggestions = [
-    'タイトルの色を変える',
-    'サブテキストを書き換える',
-    'ボタンを追加する',
-    '背景テーマを切り替える',
-    'レイアウトを2カラムにする',
-    '全体をリセットする',
+    'タイトルを青くする',
+    'タイトルを大きくする',
+    'サブテキストを「ようこそ」に変える',
+    'ボタンの文字を「開始」にする',
+    'ボタンの色を緑にする',
+    'サブテキストを太字にする',
   ];
 
   const pushLog = (level, msg) => {
