@@ -1,0 +1,47 @@
+# Render Blueprint — AI Live Demo
+# https://render.com/docs/blueprint-spec
+#
+# 使い方:
+#   1. Render ダッシュボードで "New +" → "Blueprint" → このリポジトリを選択
+#   2. デプロイ後、Environment タブで ANTHROPIC_API_KEY_PROD に
+#      Workspace "ai-live-demo-public" のキーを手動セット
+#   3. CORS_ORIGINS は未指定でも RENDER_EXTERNAL_URL が自動で許可されるので
+#      最低限の動作はする。カスタムドメインを使う場合だけ上書き設定。
+
+services:
+  - type: web
+    name: ai-live-demo
+    runtime: python
+    plan: free
+    region: singapore        # 日本から近いリージョン。oregon でも可
+    rootDir: backend
+    buildCommand: pip install .
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+
+      # === 本番動作フラグ ===
+      - key: DEBUG
+        value: "0"
+
+      # === Anthropic API ===
+      # 公開デモ用キー (Workspace "ai-live-demo-public"、月次 spend limit 設定済)。
+      # 値は Render ダッシュボードの Environment タブから手動投入する。
+      - key: ANTHROPIC_API_KEY_PROD
+        sync: false
+
+      # === コスト制御 ===
+      - key: DAILY_TOKEN_BUDGET
+        value: "500000"
+      - key: DAILY_REQUEST_BUDGET
+        value: "1000"
+
+      # === CORS ===
+      # 未指定なら main.py 側で RENDER_EXTERNAL_URL を自動許可するので空でOK。
+      # カスタムドメインや追加 origin を許可したい場合のみ設定する。
+      # - key: CORS_ORIGINS
+      #   value: https://ai-live-demo.onrender.com

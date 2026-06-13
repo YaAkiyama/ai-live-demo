@@ -8,4 +8,5 @@ dependencies = [
     "uvicorn[standard]>=0.30",
     "anthropic>=0.40",
     "python-dotenv>=1.0",
+    "slowapi>=0.1.9",
 ]

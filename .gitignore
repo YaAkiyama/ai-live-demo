@@ -147,6 +147,9 @@ activemq-data/
 # SageMath parsed files
 *.sage.py
 
+# Daily usage tracking DB (created at runtime by backend/main.py)
+backend/usage.db
+
 # Environments
 .env
 .envrc
