@@ -95,7 +95,8 @@ DAILY_REQUEST_BUDGET=1000
 
 - **モデル**: `claude-haiku-4-5` (Opus 比でコスト約 1/15)
 - **max_tokens**: 512 (旧 1024)
-- **入力長**: `prompt` は最大 500 文字 (Pydantic で弾く)
+- **入力長**: `prompt` は最大 51 文字 (Pydantic で弾く)
+  - 短文で十分なデモであり、長文を入れると表示が崩れるため意図的に低めに設定
 
 ### 2. Prompt Caching
 
@@ -105,8 +106,8 @@ DAILY_REQUEST_BUDGET=1000
 
 ### 3. レート制限 (slowapi)
 
-`/process` には IP 単位で `10 req/minute` かつ `100 req/day` の制限を適用。
-超過時は `429 Too Many Requests`。
+`/process` には IP 単位で `5 req/minute` かつ `100 req/day` の制限を適用。
+超過時は `429 Too Many Requests`。レスポンスは日本語メッセージ。
 
 ### 4. 日次予算ガード
 

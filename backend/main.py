@@ -8,10 +8,12 @@ from pathlib import Path
 from anthropic import AsyncAnthropic
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
@@ -28,7 +30,7 @@ if _prod_key:
 
 MODEL = "claude-haiku-4-5"
 MAX_OUTPUT_TOKENS = 512
-MAX_PROMPT_CHARS = 500
+MAX_PROMPT_CHARS = 51
 
 # 1日あたりのグローバル予算上限。超過したら全リクエストを 503 で拒否。
 DAILY_TOKEN_BUDGET = int(os.getenv("DAILY_TOKEN_BUDGET", "500000"))
@@ -136,7 +138,45 @@ app.add_middleware(
 
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={
+            "error": "rate_limit_exceeded",
+            "message": "短時間に連続して送信されました。少し待ってから再度お試しください。",
+        },
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_handler(request: Request, exc: RequestValidationError):
+    for err in exc.errors():
+        if "prompt" not in err.get("loc", ()):
+            continue
+        err_type = err.get("type", "")
+        if err_type == "string_too_long":
+            return JSONResponse(
+                status_code=422,
+                content={
+                    "error": "input_too_long",
+                    "message": f"入力は{MAX_PROMPT_CHARS}文字以内で入力してください。",
+                },
+            )
+        if err_type == "string_too_short":
+            return JSONResponse(
+                status_code=422,
+                content={
+                    "error": "input_too_short",
+                    "message": "指示を入力してください。",
+                },
+            )
+    return JSONResponse(
+        status_code=422,
+        content={"error": "validation_error", "detail": exc.errors()},
+    )
 
 client = AsyncAnthropic()
 
@@ -190,7 +230,7 @@ if DEBUG:
 
 
 @app.post("/process")
-@limiter.limit("10/minute;100/day")
+@limiter.limit("5/minute;100/day")
 async def process(request: Request, req: ProcessRequest):
     tokens_used, requests_made = get_today_usage()
     if requests_made >= DAILY_REQUEST_BUDGET:
